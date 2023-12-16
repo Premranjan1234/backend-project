@@ -29,4 +29,4 @@ cloudinary.config({
   { public_id: "olympic_flag" }, 
   function(error, result) {console.log(result); });
   
-  
+  export {uploadOnCloudinary}
