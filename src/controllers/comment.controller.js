@@ -60,7 +60,7 @@ const addComment = asyncHandler(async (req, res) => {
     })
     if(!comment)
     {
-        throw new ApiError(400,"comment created successfully")
+        throw new ApiError(400,"comment not created successfully")
     }
     const createdComment=await Comment.findById(user).select("-owner -video ")
 
