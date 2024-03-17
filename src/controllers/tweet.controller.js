@@ -1,6 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose"
-import {Tweet} from "../models/tweet.model.js"
-import {User} from "../models/user.model.js"
+import {Tweet} from "../models/tweet.modal.js"
+import {User} from "../models/users.modal.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -9,6 +9,7 @@ const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
     const {content}=req.body;
     const userId=req.user?._id;
+    const user=await User.findById(userId);
     if(!content){
         throw new ApiError(400,"tweet is required")
     }
@@ -22,7 +23,13 @@ const createTweet = asyncHandler(async (req, res) => {
         throw new ApiError(500,"Something went wrong while created tweet")
     }
     return res.status(201).json(
-        new ApiResponse(200,createdTweet,"Tweet created  successfully")
+        new ApiResponse(200,
+            {
+            newtweet:createdTweet,
+            name:user.username
+
+        },
+            "Tweet created  successfully")
     )
 
 
@@ -31,9 +38,10 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
     const userId = req.params.userId;
-    const tweets = await Tweet.find({ user: userId }).populate('user', 'owner');
+    const tweets = await Tweet.find({ owner: userId })
+    console.log(tweets);    
     return res.status(201).json(
-        new ApiResponse(200,tweets,"Tweet created successfully")
+        new ApiResponse(200,tweets,"Tweet fetched successfully")
     )
     // TODO: get user tweets
 })
@@ -41,6 +49,9 @@ const getUserTweets = asyncHandler(async (req, res) => {
 const updateTweet = asyncHandler(async (req, res) => {
       const { newtweet } = req.body;
       const tweetId = req.params.tweetId;
+      if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400," Not a valid tweetId ")
+    }
     
       const updatedTweet=await Tweet.findByIdAndUpdate(
         tweetId,
@@ -50,9 +61,10 @@ const updateTweet = asyncHandler(async (req, res) => {
             }
         },
         {new:true}
-    ).select("-owner")
+    ).select();
+    console.log(updatedTweet);
     return res.status(201).json(
-        new ApiResponse(200,updatedTweet,"Tweet created  successfully")
+        new ApiResponse(200,updatedTweet,"Tweet updated  successfully")
     )
 
 
@@ -69,9 +81,11 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(400,"you are not authorised to delete this tweet")
     }
 
-    await tweet.remove();
+    const deletedTweet=await Tweet.deleteOne({ _id: tweetId });
 
-
+    return res.status(201).json(
+        new ApiResponse(200,deletedTweet,"Tweet deleted  successfully")
+    )
     
     //TODO: delete tweet
 })
