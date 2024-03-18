@@ -10,6 +10,10 @@ const createTweet = asyncHandler(async (req, res) => {
     const {content}=req.body;
     const userId=req.user?._id;
     const user=await User.findById(userId);
+    if(!user)
+    {
+        throw new ApiError(400,"User not found or not logged in");
+    }
     if(!content){
         throw new ApiError(400,"tweet is required")
     }
@@ -38,6 +42,9 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
     const userId = req.params.userId;
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400," Not a valid userId ")
+    }
     const tweets = await Tweet.find({ owner: userId })
     console.log(tweets);    
     return res.status(201).json(
@@ -51,6 +58,10 @@ const updateTweet = asyncHandler(async (req, res) => {
       const tweetId = req.params.tweetId;
       if (!isValidObjectId(tweetId)) {
         throw new ApiError(400," Not a valid tweetId ")
+    }
+    const tweet=await Tweet.findById(tweetId);
+    if (tweet.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(400,"you are not authorised to update this tweet")
     }
     
       const updatedTweet=await Tweet.findByIdAndUpdate(
