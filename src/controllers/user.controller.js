@@ -291,8 +291,7 @@ const updateCoverImage=asyncHandler(async(req,res)=>{
 })
 
 const getUserChannelProfile=asyncHandler(async(req,res)=>{
-     const {username}=req.params
-     console.log(username);
+     const {username}=req.params;
      if(!username?.trim())
      {
         throw new ApiError(400,"username is required")
@@ -332,10 +331,11 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
                     $size:"$subscribedTo"
                 },
                 isSubscribed:{
-                    if:{$in:[req.user?._id,"$subscribers.subscriber"]},
-                    then: true,
-                    else:false
-
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
                 }
             }
         },

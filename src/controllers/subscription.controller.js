@@ -11,7 +11,8 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     if(!isValidObjectId(channelId)){
         throw new ApiError(400,"please provide valid channelId")
     }
-    const { userId } = req.user; // Assuming user ID is available in req.user
+    const userId=req.user?._id;
+    console.log(userId) // Assuming user ID is available in req.user
 
     // Check if the channel exists
     const channelExists = await User.exists({ _id: channelId });
@@ -20,17 +21,21 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     }
 
     // Check if the user is already subscribed to the channel
-    const isSubscribed = await Subscription.exists({ subscriber: userId, channel: channelId });
+    const isSubscribed = await Subscription.exists({ subscriber:userId, channel:channelId });
 
     // Toggle subscription
     if (isSubscribed) {
         // If already subscribed, unsubscribe
-        await Subscription.findOneAndDelete({ subscriber: userId, channel: channelId });
-        res.json(new ApiResponse(true, "Unsubscribed successfully"));
+        const toggleSubscribe=await Subscription.deleteOne({ subscriber:userId, channel:channelId });
+        res.status(200).json
+        (new ApiResponse(200,toggleSubscribe,"Unsubscribed successfully"));
     } else {
         // If not subscribed, subscribe
-        await Subscription.create({ subscriber: userId, channel: channelId });
-        res.json(new ApiResponse(true, "Subscribed successfully"));
+        const toggleSubscribe= await Subscription.create({ subscriber: userId, channel: channelId });
+        res.status(200).json(
+            new ApiResponse(
+                200,toggleSubscribe,"Subscribed successfully"
+                ));
     }
     
     // TODO: toggle subscription
@@ -38,16 +43,16 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-    
-    const { channelId } = req.params;
+    const {channelId} =req.params;
     if(!isValidObjectId(channelId)){
         throw new ApiError(400,"please provide valid channelId")
     }
 
     // Get subscribers of the channel
-    const subscribers = await Subscription.find({ channel: channelId }).populate("subscriber", "username fullName");
+    const subscribers = await Subscription.find({ channel:channelId }).populate("subscriber", "username fullName");
 
-    res.json(new ApiResponse(true, "Subscribers fetched successfully", subscribers));
+    res.status(200).json(
+        new ApiResponse(200,subscribers, "Subscribers fetched successfully"));
 
 })
 
@@ -60,9 +65,9 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     }
 
     // Get channels subscribed by the user
-    const subscribedChannels = await Subscription.find({ subscriber: subscriberId }).populate("channel", "name");
+    const subscribedChannels = await Subscription.find({ subscriber: subscriberId }).populate("channel", "username fullName");
 
-    res.json(new ApiResponse(true, "Subscribed channels fetched successfully", subscribedChannels));
+    res.status(200).json(new ApiResponse(200,subscribedChannels, "Subscribed channels fetched successfully"));
 })
 
 export {

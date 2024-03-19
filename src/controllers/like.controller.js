@@ -11,21 +11,21 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         throw new ApiError(400,"please provide valid videoid")
     }
     const userId = req.user._id;
-    const existingLike=await Like.findOne({ video: videoId, user: userId })
+    const existingLike=await Like.findOne({ video: videoId, likedBy: userId })
     if (existingLike) {
         
-        await existingLike.remove();
+        const deletedLike=await Like.deleteOne({ video: videoId, likedBy: userId });
         return res.status(200).json(
-            new ApiResponse(200,existingLike,"video unliked successfully")
+            new ApiResponse(200,deletedLike,"video unliked successfully")
         )
        
     } 
         const like=await Like.create({
             video:videoId,
-            user:userId
+            likedBy:userId
         })
 
-        const recentLikedVideo= await Like.findById(like._id).select("-user -tweet -comment");
+        const recentLikedVideo= await Like.findById(like._id).select(" -tweet -comment");
 
         if(!recentLikedVideo){
             throw new ApiError(400,"Video not liked by user")
@@ -47,21 +47,22 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         throw new ApiError(400,"please provide valid commentid")
     }
     const userId = req.user._id;
-    const existingLike=await Like.findOne({ comment: commentId, user: userId })
+    const existingLike=await Like.findOne({ comment: commentId, likedBy: userId })
     if (existingLike) {
         
-        await existingLike.remove();
+        const deletedLike=await Like.deleteOne({ video: commentId, likedBy: userId });
         return res.status(200).json(
-            new ApiResponse(200,existingLike,"comment unliked successfully")
+            new ApiResponse(200,deletedLike,"comment unliked successfully")
         )
+        
        
     } 
         const like=await Like.create({
             comment:commentId,
-            user:userId
+            likedBy:userId
         })
 
-        const recentLikedComment= await Like.findById(like._id).select("-user -tweet -video");
+        const recentLikedComment= await Like.findById(like._id).select(" -tweet -video");
 
         if(!recentLikedComment){
             throw new ApiError(400,"Comment not liked by user")
@@ -84,21 +85,21 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         throw new ApiError(400,"please provide valid tweetId")
     }
     const userId = req.user._id;
-    const existingLike=await Like.findOne({ tweet: tweetId , user: userId })
+    const existingLike=await Like.findOne({ tweet:tweetId , likedBy:userId })
     if (existingLike) {
         
-        await existingLike.remove();
+        const deletedLike=await Like.deleteOne({ video: tweetId, likedBy: userId });
         return res.status(200).json(
-            new ApiResponse(200,existingLike,"tweet unliked successfully")
+            new ApiResponse(200,deletedLike,"video unliked successfully")
         )
-       
+        
     } 
         const like=await Like.create({
             tweet:tweetId,
-            user:userId
+            likedBy:userId
         })
 
-        const recentLikedTweet= await Like.findById(like._id).select("-user -comment -video");
+        const recentLikedTweet= await Like.findById(like._id).select(" -comment -video");
 
         if(!recentLikedTweet){
             throw new ApiError(400,"Tweet not liked by user")
@@ -117,7 +118,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-    const userLikes=await Like.findById(userId)
+    const userLikes=await Like.find({likedBy:userId});
     const videoIds = userLikes.map((like) => like.video);
 
     if(!videoIds)

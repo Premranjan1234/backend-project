@@ -8,7 +8,7 @@ import { Video } from "../models/video.modal.js"
 const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
     const {videoId} = req.params
-    const {page = 1, limit = 10} = req.query
+    let {page = 1, limit = 10} = req.query
 
     if(!videoId)
     {
@@ -21,13 +21,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
       const pipeline = [
         {
           $match: {
-            video: mongoose.Types.ObjectId(videoId),
+            video:videoId,
           },
         },
         {
             $project:{
                 content:1,
-                owner:1
+                owner:1,
+                video:1
         }}
         // Add other stages to the pipeline if needed
       ];
@@ -38,8 +39,8 @@ const getVideoComments = asyncHandler(async (req, res) => {
         throw new ApiError(500,"pagination result not found")
       }
 
-      return res.status(200).
-     json( new ApiResponse(200,result,"comments fetched successfully"))
+      return res.status(200).json( 
+        new ApiResponse(200,result,"comments fetched successfully"));
 
     
 
@@ -63,10 +64,10 @@ const addComment = asyncHandler(async (req, res) => {
     {
         throw new ApiError(400,"comment not created successfully")
     }
-    const createdComment=await Comment.findById(user).select("-owner -video ")
+    const createdComment=await Comment.findById(comment._id).select();
 
     return res.status(200).
-     json( new ApiResponse(200,createdComment,"comments fetched successfully"))
+     json( new ApiResponse(200,createdComment,"comment created successfully"))
 
     
     // TODO: add a comment to a video
@@ -75,6 +76,14 @@ const addComment = asyncHandler(async (req, res) => {
 const updateComment = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
     const { text } = req.body;
+    const comment=await Comment.findById(commentId);
+    if(!comment){
+      throw new ApiError(401,"comment not found");
+    }
+    if (comment.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(400,"you are not authorised to update this tweet")
+    }
+    
     const updatedComment=await Comment.findByIdAndUpdate(
         commentId,
         {
@@ -86,10 +95,11 @@ const updateComment = asyncHandler(async (req, res) => {
              new:true
         }
 
-        ).select("-owner -video")
+        ).select();
 
-        return res.status(200).
-        json( new ApiResponse(200,updatedComment,"Comment updated successfully"))
+        return res.status(200).json( 
+          new ApiResponse(200,updatedComment,"Comment updated successfully"
+          ))
 
 
 
@@ -102,10 +112,14 @@ const deleteComment = asyncHandler(async (req, res) => {
     if(!existingComment){
         throw new ApiError(400,"Please enter a valid commentId as comment not found")
     }
-    await existingComment.remove();
+    if (existingComment.owner.toString() !== req.user._id.toString()) {
+      throw new ApiError(400,"you are not authorised to delete this comment")
+  }
+  const deletedComment=await Comment.deleteOne({ _id: commentId });
     
-    return res.status(200).
-        json( new ApiResponse(200,existingComment,"Comment deleted successfully"))
+    return res.status(200).json( 
+      new ApiResponse(200,deletedComment,
+        "Comment deleted successfully"))
 
 
 
