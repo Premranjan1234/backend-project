@@ -19,6 +19,8 @@ import videoRouter from "./routes/video.router.js"
 import commentRouter from "./routes/comment.router.js"
 import likeRouter from "./routes/like.router.js"
 import playlistRouter from "./routes/playlist.router.js"
+import dashboardRouter from "./routes/dashboard.router.js"
+import healthcheckRouter from "./routes/healthcheck.router.js"
 
 app.use('/api/v1/users',userRouter)
 app.use("/api/v1/tweets", tweetRouter)
@@ -27,6 +29,8 @@ app.use("/api/v1/videos", videoRouter)
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
+app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/healthcheck", healthcheckRouter)
 
 
 
